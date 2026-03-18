@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>京东大模型Token额度卡使用指南</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.3;
+            animation: moveGrid 20s linear infinite;
+        }
+
+        @keyframes moveGrid {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(20px, 20px); }
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            position: relative;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            opacity: 0.9;
+            position: relative;
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 30px 0;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            transform: translateY(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #e1251b, #ff6b6b);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 70px rgba(0,0,0,0.35);
+        }
+
+        .card h2 {
+            color: #e1251b;
+            font-size: 2em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #e1251b, #ff6b6b);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2em;
+            flex-shrink: 0;
+        }
+
+        .step-list {
+            counter-reset: step;
+            list-style: none;
+        }
+
+        .step-item {
+            position: relative;
+            padding-left: 60px;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            opacity: 0;
+            animation: slideIn 0.6s ease-out forwards;
+        }
+
+        .step-item:nth-child(1) { animation-delay: 0.1s; }
+        .step-item:nth-child(2) { animation-delay: 0.2s; }
+        .step-item:nth-child(3) { animation-delay: 0.3s; }
+        .step-item:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .step-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1em;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .step-title {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .step-content {
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-left: 4px solid #e1251b;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .highlight-box::before {
+            content: '💡';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: white;
+            padding: 0 10px;
+            font-size: 1.2em;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: 'CODE';
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 0.7em;
+            color: #666;
+        }
+
+        .token-card-preview {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .token-card-preview::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+
+        .token-amount {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 10px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .token-label {
+            opacity: 0.8;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .usage-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .usage-item {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .usage-item:hover {
+            border-color: #e1251b;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .usage-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .usage-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .usage-desc {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .faq-item {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        .faq-question {
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            transition: color 0.3s;
+        }
+
+        .faq-question:hover {
+            color: #e1251b;
+        }
+
+        .faq-answer {
+            color: #666;
+            padding-top: 10px;
+            display: none;
+            line-height: 1.8;
+        }
+
+        .faq-answer.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s;
+            font-size: 1.2em;
+        }
+
+        .toggle-icon.rotated {
+            transform: rotate(180deg);
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #e1251b, #ff6b6b);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(225, 37, 27, 0.3);
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(225, 37, 27, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9em;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; }
+            .card { padding: 25px; }
+            .step-item { padding-left: 50px; }
+            .token-amount { font-size: 2em; }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e1251b, #ff6b6b);
+            width: 0%;
+            transition: width 1s ease;
+            border-radius: 4px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .stat-item h3 {
+            font-size: 2em;
+            color: #e1251b;
+            margin-bottom: 5px;
+        }
+
+        .stat-item p {
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>京东大模型 Token 额度卡</h1>
+            <p class="subtitle">完整使用指南与最佳实践</p>
+        </header>
+
+        <div class="card">
+            <h2><span class="icon">🎫</span>什么是 Token 额度卡？</h2>
+            <p style="font-size: 1.1em; color: #555; margin-bottom: 20px;">
+                京东大模型 Token 额度卡是用于调用京东言犀大模型 API 的预付费凭证。每张卡片包含一定数量的 Token 额度，可用于文本生成、对话、代码编写等 AI 能力调用。
+            </p>
+            
+            <div class="token-card-preview">
+                <div class="token-label">可用额度</div>
+                <div class="token-amount" id="tokenCounter">1,000,000</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                    <span>卡号：JD-LLM-****-8888</span>
+                    <span class="pulse">● 有效</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar" style="width: 75%"></div>
+                </div>
+                <small>已使用 750,000 Tokens (75%)</small>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3>1:1</h3>
+                    <p>输入输出比例</p>
+                </div>
+                <div class="stat-item">
+                    <h3>30天</h3>
+                    <p>有效期</p>
+                </div>
+                <div class="stat-item">
+                    <h3>24/7</h3>
+                    <p>技术支持</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2><span class="icon">🚀</span>快速开始</h2>
+            <ol class="step-list">
+                <li class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-title">获取额度卡</div>
+                    <div class="step-content">
+                        通过京东云官网或合作伙伴渠道购买 Token 额度卡。购买成功后，您将获得：
+                        <ul style="margin-top: 10px; padding-left: 20px; color: #666;">
+                            <li>API Key（访问密钥）</li>
+                            <li>Secret Key（密钥）</li>
+                            <li>额度卡密（Card Secret）</li>
+                        </ul>
+                    </div>
+                </li>
+                
+                <li class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-title">激活额度卡</div>
+                    <div class="step-content">
+                        登录京东云控制台，进入"大模型服务" → "额度管理" → "激活额度卡"。
+                        <div class="highlight-box">
+                            <strong>注意：</strong>激活前请确认您的账户已完成实名认证，否则无法正常使用 API 服务。
+                        </div>
+                    </div>
+                </li>
+
+                <li class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-title">配置 API 调用</div>
+                    <div class="step-content">
+                        使用以下代码示例开始调用京东大模型 API：
+                        <div class="code-block">
+POST https://api.jd.com/llm/v1/chat/completions
+Headers:
+  Authorization: Bearer YOUR_API_KEY
+  Content-Type: application/json
+
+Body:
+{
+  "model": "jingxi-llm-13b",
+  "messages": [
+    {"role": "system", "content": "你是一个 helpful 助手"},
+    {"role": "user", "content": "你好，请介绍一下 Token 额度卡的使用方法"}
+  ],
+  "max_tokens": 2000
+}</div>
+                    </div>
+                </li>
+
+                <li class="step-item">
+                    <div class="step-number">4</div>
+                    <div class="step-title">监控使用情况</div>
+                    <div class="step-content">
+                        在控制台实时查看 Token 消耗情况，设置用量预警阈值。当剩余额度低于 10% 时，系统会自动发送提醒。
+                    </div>
+                </li>
+            </ol>
+        </div>
+
+        <div class="card">
+            <h2><span class="icon">💡</span>使用场景</h2>
+            <div class="usage-grid">
+                <div class="usage-item">
+                    <div class="usage-icon">🤖</div>
+                    <div class="usage-title">智能客服</div>
+                    <div class="usage-desc">构建 7×24 小时智能问答系统，自动处理客户咨询</div>
+                </div>
+                <div class="usage-item">
+                    <div class="usage-icon">📝</div>
+                    <div class="usage-title">内容创作</div>
+                    <div class="usage-desc">自动生成营销文案、产品描述、新闻稿件等内容</div>
+                </div>
+                <div class="usage-item">
+                    <div class="usage-icon">💻</div>
+                    <div class="usage-title">代码辅助</div>
+                    <div class="usage-desc">代码生成、Bug 修复、代码解释与优化建议</div>
+                </div>
+                <div class="usage-item">
+                    <div class="usage-icon">📊</div>
+                    <div class="usage-title">数据分析</div>
+                    <div class="usage-desc">自然语言查询数据，生成分析报告与可视化建议</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2><span class="icon">⚡</span>最佳实践</h2>
+            <div class="highlight-box">
+                <strong>Token 优化技巧：</strong>合理设置 max_tokens 参数，避免生成过长内容导致额度浪费。使用流式输出（stream=true）可以提升响应速度并节省带宽。
+            </div>
+            
+            <ul style="list-style: none; padding: 0;">
+                <li style="padding: 15px 0; border-bottom: 1px solid #eee; display: flex; align-items: start; gap: 15px;">
+                    <span style="color: #e1251b; font-weight: bold;">✓</span>
+                    <div>
+                        <strong>批量处理：</strong>对于大量相似请求，建议使用批处理接口，减少 API 调用次数
+                    </div>
+                </li>
+                <li style="padding: 15px 0; border-bottom: 1px solid #eee; display: flex; align-items: start; gap: 15px;">
+                    <span style="color: #e1251b; font-weight: bold;">✓</span>
+                    <div>
+                        <strong>缓存策略：</strong>对重复性高的查询结果进行本地缓存，避免重复消耗 Token
+                    </div>
+                </li>
+                <li style="padding: 15px 0; display: flex; align-items: start; gap: 15px;">
+                    <span style="color: #e1251b; font-weight: bold;">✓</span>
+                    <div>
+                        <strong>错误重试：</strong>实现指数退避重试机制，确保服务稳定性
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2><span class="icon">❓</span>常见问题</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>Token 额度卡过期了怎么办？</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    额度卡通常有 30 天有效期。过期后未使用的额度将自动清零，无法恢复。建议在有效期内合理规划使用，或联系京东云客服申请延期（视具体情况而定）。
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>如何查询剩余 Token 数量？</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    登录京东云控制台，进入"大模型服务" → "额度管理"即可查看实时余额。也可以通过 API 接口查询：<code>GET /v1/quota/remaining</code>。
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>Token 消耗是如何计算的？</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Token 消耗 = 输入 Token 数 + 输出 Token 数。中文通常 1 个汉字 ≈ 1-2 个 Token，英文 1 个单词 ≈ 1-2 个 Token。具体取决于模型分词规则。系统会在每次 API 调用返回的响应头中包含实际消耗的 Token 数量（X-Consumed-Tokens）。
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>可以多个项目共享一张额度卡吗？</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    可以。额度卡绑定的是京东云账号，账号下的所有应用和项目都可以共享该额度。建议为不同环境（开发/测试/生产）创建子账号并分配相应权限。
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <h2 style="color: white; justify-content: center;">开始您的大模型之旅</h2>
+            <p style="font-size: 1.2em; margin: 20px 0; opacity: 0.9;">
+                立即获取 Token 额度卡，解锁京东言犀大模型的强大能力
+            </p>
+            <div class="button-group" style="justify-content: center;">
+                <a href="#" class="btn" onclick="alert('即将跳转至京东云购买页面...')">立即购买</a>
+                <a href="#" class="btn btn-secondary" onclick="alert('即将打开技术文档...')">查看文档</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>© 2024 京东云 | 本指南仅供参考，具体以京东云官方文档为准</p>
+            <p style="margin-top: 10px; font-size: 0.8em;">最后更新：2024年3月</p>
+        </footer>
+    </div>
+
+    <script>
+        // FAQ 折叠功能
+        function toggleFaq(element) {
+            const answer = element.nextElementSibling;
+            const icon = element.querySelector('.toggle-icon');
+            
+            answer.classList.toggle('active');
+            icon.classList.toggle('rotated');
+        }
+
+        // Token 数字动画
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            const range = end - start;
+            const minTimer = 50;
+            let stepTime = Math.abs(Math.floor(duration / range));
+            stepTime = Math.max(stepTime, minTimer);
+            
+            let startTime = new Date().getTime();
+            let endTime = startTime + duration;
+            let timer;
+          
+            function run() {
+                let now = new Date().getTime();
+                let remaining = Math.max((endTime - now) / duration, 0);
+                let value = Math.round(end - (remaining * range));
+                obj.innerHTML = value.toLocaleString();
+                if (value == end) {
+                    clearInterval(timer);
+                }
+            }
+            
+            timer = setInterval(run, stepTime);
+            run();
+        }
+
+        // 页面加载时启动动画
+        window.onload = function() {
+            animateValue("tokenCounter", 0, 1000000, 2000);
+            
+            // 进度条动画
+            setTimeout(() => {
+                document.getElementById('progressBar').style.width = '75%';
+            }, 500);
+        };
+
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // 卡片进入视口动画
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = "1";
+                    entry.target.style.transform = "translateY(0)";
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.card').forEach((card, index) => {
+            card.style.opacity = "0";
+            card.style.transform = "translateY(30px)";
+            card.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>
