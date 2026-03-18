@@ -534,8 +534,11 @@
                     <div class="step-content">
                         使用以下命令安装：
                         <div class="code-block">
+<pre>
 # curl -fsSL https://openclaw.ai/install.sh | bash
 # openclaw onboard
+# 在模型设置环节，选择Z.AI（选择Coding-Plan-CN子项），输入API Key，模型选择GLM-4.5-Air。
+</pre>    
 </div>
                     </div>
                 </li>
@@ -569,16 +572,30 @@
         </div>
 
         <div class="card">
-            <h2><span class="icon">⚡</span>最佳实践</h2>
+            <h2><span class="icon">⚡</span>最佳实践（OpenClaw Token成本优化）</h2>
             <div class="highlight-box">
-                <strong>Token 优化技巧：</strong>合理设置 max_tokens 参数，避免生成过长内容导致额度浪费。使用流式输出（stream=true）可以提升响应速度并节省带宽。
+                <strong>Token 优化技巧：</strong>OpenClaw配置参考：https://docs.openclaw.ai/gateway/configuration-reference
             </div>
             
             <ul style="list-style: none; padding: 0;">
                 <li style="padding: 15px 0; border-bottom: 1px solid #eee; display: flex; align-items: start; gap: 15px;">
                     <span style="color: #e1251b; font-weight: bold;">✓</span>
                     <div>
-                        <strong>批量处理：</strong>对于大量相似请求，建议使用批处理接口，减少 API 调用次数
+                        <strong>模型分层路由策略：</strong>三级模型架构是最有效的单项成本优化措施。配置示例：
+                         <div class="code-block">
+                           <pre>
+{
+  "models": {
+    "strategy": "cost-aware",
+    "routing": [
+      {"task": "coding", "models": ["claude-sonnet-4-5"]},
+      {"task": "simple_qa", "models": ["claude-haiku-4-5"]},
+      {"task": "heartbeat", "models": ["ollama/llama3.2:1b"]}
+    ]
+  }
+}
+                           </pre>    
+                         </div>
                     </div>
                 </li>
                 <li style="padding: 15px 0; border-bottom: 1px solid #eee; display: flex; align-items: start; gap: 15px;">
