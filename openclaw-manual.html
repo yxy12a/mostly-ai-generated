@@ -1,1 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenClaw Token 优化方案 | 下一代智能合约加速器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        body {
+            background-color: #0a0a0f;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        
+        /* 动态背景网格 */
+        .bg-grid {
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+        
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        /* 发光效果 */
+        .glow-text {
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+        .glow-box {
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.1);
+        }
+        
+        /* 渐变边框 */
+        .gradient-border {
+            position: relative;
+            background: #0f172a;
+            border-radius: 16px;
+        }
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 18px;
+            padding: 2px;
+            background: linear-gradient(135deg, #6366f1, #ec4899, #8b5cf6);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+        .gradient-border:hover::before {
+            opacity: 1;
+        }
+        
+        /* 浮动动画 */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        .float-anim {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        /* 脉冲效果 */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+            50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.8); }
+        }
+        .pulse-glow {
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+        
+        /* 代码块样式 */
+        .code-block {
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        
+        /* 滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0f;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4f46e5;
+            border-radius: 4px;
+        }
+        
+        /* 标签切换 */
+        .tab-active {
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            color: white;
+        }
+        
+        /* 性能计数器动画 */
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .stat-item {
+            animation: countUp 0.8s ease-out forwards;
+        }
+        
+        /* 神经网络背景动画 */
+        .neural-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body class="bg-grid min-h-screen">
 
+    <!-- 动态背景 Canvas -->
+    <canvas id="neuralCanvas" class="neural-bg"></canvas>
+
+    <!-- 导航栏 -->
+    <nav class="fixed w-full z-50 bg-black/50 backdrop-blur-xl border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center pulse-glow">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight glow-text">OpenClaw</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#features" class="text-gray-300 hover:text-white transition-colors">核心特性</a>
+                    <a href="#performance" class="text-gray-300 hover:text-white transition-colors">性能数据</a>
+                    <a href="#architecture" class="text-gray-300 hover:text-white transition-colors">架构设计</a>
+                    <a href="#implementation" class="text-gray-300 hover:text-white transition-colors">实现方案</a>
+                </div>
+                <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-full font-medium transition-all hover:scale-105 glow-box">
+                    立即接入
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-8">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-sm font-mono">
+                        <span class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
+                        v2.4.0 已发布 | Gas 优化提升 300%
+                    </div>
+                    <h1 class="text-5xl lg:text-7xl font-extrabold leading-tight">
+                        <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
+                            OpenClaw
+                        </span>
+                        <br>
+                        <span class="text-white">Token 优化引擎</span>
+                    </h1>
+                    <p class="text-xl text-gray-400 leading-relaxed max-w-2xl">
+                        基于零知识证明与分片技术的下一代 Token 优化方案。通过智能合约编译时优化与运行时动态调度，实现 Web3 应用的极致性能。
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <button class="group relative px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl font-semibold text-white overflow-hidden transition-all hover:scale-105">
+                            <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform"></div>
+                            <span class="relative flex items-center gap-2">
+                                查看文档
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </span>
+                        </button>
+                        <button class="px-8 py-4 border border-white/20 rounded-xl font-semibold text-white hover:bg-white/5 transition-all flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                            GitHub
+                        </button>
+                    </div>
+                </div>
+                <div class="relative float-anim">
+                    <div class="relative w-full aspect-square max-w-lg mx-auto">
+                        <!-- 3D 视觉效果 -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-3xl blur-3xl"></div>
+                        <div class="relative bg-gray-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 glow-box">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="flex gap-2">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                </div>
+                                <span class="text-xs text-gray-500 font-mono">openclaw.config.js</span>
+                            </div>
+                            <pre class="font-mono text-sm text-gray-300 overflow-x-auto"><code><span class="text-purple-400">const</span> <span class="text-blue-400">config</span> = {
+  <span class="text-sky-300">optimization</span>: {
+    <span class="text-sky-300">level</span>: <span class="text-orange-400">"aggressive"</span>,
+    <span class="text-sky-300">zkProofs</span>: <span class="text-purple-400">true</span>,
+    <span class="text-sky-300">batching</span>: {
+      <span class="text-sky-300">enabled</span>: <span class="text-purple-400">true</span>,
+      <span class="text-sky-300">maxSize</span>: <span class="text-green-400">100</span>
+    }
+  },
+  <span class="text-sky-300">sharding</span>: {
+    <span class="text-sky-300">strategy</span>: <span class="text-orange-400">"dynamic"</span>,
+    <span class="text-sky-300">parallel</span>: <span class="text-purple-400">true</span>
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 性能指标 -->
+    <section id="performance" class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="gradient-border p-6 stat-item" style="animation-delay: 0.1s">
+                    <div class="text-4xl font-bold text-white mb-2 font-mono">300%</div>
+                    <div class="text-gray-400 text-sm">Gas 费用降低</div>
+                </div>
+                <div class="gradient-border p-6 stat-item" style="animation-delay: 0.2s">
+                    <div class="text-4xl font-bold text-white mb-2 font-mono">10ms</div>
+                    <div class="text-gray-400 text-sm">平均确认时间</div>
+                </div>
+                <div class="gradient-border p-6 stat-item" style="animation-delay: 0.3s">
+                    <div class="text-4xl font-bold text-white mb-2 font-mono">50k+</div>
+                    <div class="text-gray-400 text-sm">TPS 处理能力</div>
+                </div>
+                <div class="gradient-border p-6 stat-item" style="animation-delay: 0.4s">
+                    <div class="text-4xl font-bold text-white mb-2 font-mono">99.9%</div>
+                    <div class="text-gray-400 text-sm">合约执行成功率</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 核心特性 -->
+    <section id="features" class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">核心优化技术</h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">基于多层架构的深度优化策略，从编译到运行时的全方位性能提升</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- 特性 1 -->
+                <div class="group relative bg-gray-900/50 backdrop-blur border border-white/10 rounded-2xl p-8 hover:border-indigo-500/50 transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-indigo-600/10 to-purple-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative">
+                        <div class="w-14 h-14 bg-indigo-500/20 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <svg class="w-7 h-7 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3 text-white">ZK-Rollup 集成</h3>
+                        <p class="text-gray-400 leading-relaxed">内置零知识证明压缩算法，将多笔交易合并为单一证明，大幅降低链上存储与验证成本。</p>
+                    </div>
+                </div>
+
+                <!-- 特性 2 -->
+                <div class="group relative bg-gray-900/50 backdrop-blur border border-white/10 rounded-2xl p-8 hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-pink-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative">
+                        <div class="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <svg class="w-7 h-7 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3 text-white">动态分片</h3>
+                        <p class="text-gray-400 leading-relaxed">智能负载均衡算法自动分配交易到最优分片，避免网络拥堵，实现线性扩展能力。</p>
+                    </div>
+                </div>
+
+                <!-- 特性 3 -->
+                <div class="group relative bg-gray-900/50 backdrop-blur border border-white/10 rounded-2xl p-8 hover:border-pink-500/50 transition-all duration-300 hover:-translate-y-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-pink-600/10 to-rose-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative">
+                        <div class="w-14 h-14 bg-pink-500/20 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <svg class="w-7 h-7 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3 text-white">预编译优化</h3>
+                        <p class="text-gray-400 leading-relaxed">热点合约代码预编译为机器码，绕过 EVM 解释执行，直接由节点硬件加速执行。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 性能对比图表 -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8 bg-black/30">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-3xl md:text-4xl font-bold mb-6">性能提升对比</h2>
+                    <p class="text-gray-400 mb-8 leading-relaxed">
+                        通过 OpenClaw 优化引擎，Token 转账与合约调用的 Gas 消耗显著降低。在批量交易场景下，优化效果尤为明显，最高可节省 85% 的 Gas 费用。
+                    </p>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-4 h-4 bg-indigo-500 rounded"></div>
+                            <span class="text-gray-300">标准 ERC-20 转账</span>
+                            <span class="ml-auto text-indigo-400 font-mono">-65%</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="w-4 h-4 bg-purple-500 rounded"></div>
+                            <span class="text-gray-300">批量空投 (Airdrop)</span>
+                            <span class="ml-auto text-purple-400 font-mono">-85%</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="w-4 h-4 bg-pink-500 rounded"></div>
+                            <span class="text-gray-300">DEX 流动性操作</span>
+                            <span class="ml-auto text-pink-400 font-mono">-72%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-900/50 p-6 rounded-2xl border border-white/10">
+                    <canvas id="performanceChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 架构设计 -->
+    <section id="architecture" class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">技术架构</h2>
+                <p class="text-gray-400">四层优化架构，全方位提升 Token 经济效率</p>
+            </div>
+
+            <div class="relative">
+                <!-- 连接线 -->
+                <div class="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 -translate-y-1/2"></div>
+                
+                <div class="grid md:grid-cols-4 gap-6 relative">
+                    <!-- 层 1 -->
+                    <div class="bg-gray-900 border border-white/10 rounded-xl p-6 relative hover:border-indigo-500/50 transition-colors group">
+                        <div class="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-sm font-bold border-4 border-gray-900">1</div>
+                        <h3 class="mt-4 text-lg font-bold text-white mb-2">编译层</h3>
+                        <p class="text-sm text-gray-400">Solidity 代码静态分析，自动识别并替换高 Gas 消耗模式</p>
+                    </div>
+
+                    <!-- 层 2 -->
+                    <div class="bg-gray-900 border border-white/10 rounded-xl p-6 relative hover:border-purple-500/50 transition-colors group">
+                        <div class="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm font-bold border-4 border-gray-900">2</div>
+                        <h3 class="mt-4 text-lg font-bold text-white mb-2">内存池</h3>
+                        <p class="text-sm text-gray-400">智能交易捆绑 (Bundling)，合并相似操作减少状态变更</p>
+                    </div>
+
+                    <!-- 层 3 -->
+                    <div class="bg-gray-900 border border-white/10 rounded-xl p-6 relative hover:border-pink-500/50 transition-colors group">
+                        <div class="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-pink-600 rounded-full flex items-center justify-center text-sm font-bold border-4 border-gray-900">3</div>
+                        <h3 class="mt-4 text-lg font-bold text-white mb-2">执行层</h3>
+                        <p class="text-sm text-gray-400">并行 EVM 与预编译合约，硬件级加速密码学运算</p>
+                    </div>
+
+                    <!-- 层 4 -->
+                    <div class="bg-gray-900 border border-white/10 rounded-xl p-6 relative hover:border-rose-500/50 transition-colors group">
+                        <div class="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-rose-600 rounded-full flex items-center justify-center text-sm font-bold border-4 border-gray-900">4</div>
+                        <h3 class="mt-4 text-lg font-bold text-white mb-2">数据层</h3>
+                        <p class="text-sm text-gray-400">状态压缩与历史数据分片，降低节点存储压力</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 代码示例 -->
+    <section id="implementation" class="py-20 px-4 sm:px-6 lg:px-8 bg-black/30">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">快速接入</h2>
+                <p class="text-gray-400">仅需几行代码即可启用 OpenClaw 优化</p>
+            </div>
+
+            <div class="bg-gray-900 rounded-2xl border border-white/10 overflow-hidden">
+                <div class="flex border-b border-white/10">
+                    <button onclick="switchTab('hardhat')" id="tab-hardhat" class="tab-active px-6 py-3 text-sm font-medium transition-all">Hardhat</button>
+                    <button onclick="switchTab('foundry')" id="tab-foundry" class="px-6 py-3 text-sm font-medium text-gray-400 hover:text-white transition-all">Foundry</button>
+                    <button onclick="switchTab('truffle')" id="tab-truffle" class="px-6 py-3 text-sm font-medium text-gray-400 hover:text-white transition-all">Truffle</button>
+                </div>
+                
+                <div class="p-6 overflow-x-auto">
+                    <pre id="code-content" class="font-mono text-sm leading-relaxed"><code><span class="text-gray-500">// hardhat.config.js</span>
+<span class="text-purple-400">require</span>(<span class="text-orange-300">"@openclaw/hardhat-plugin"</span>);
+
+<span class="text-sky-300">module.exports</span> = {
+  <span class="text-sky-300">solidity</span>: <span class="text-orange-300">"0.8.19"</span>,
+  <span class="text-sky-300">openclaw</span>: {
+    <span class="text-sky-300">enabled</span>: <span class="text-purple-400">true</span>,
+    <span class="text-sky-300">optimizer</span>: {
+      <span class="text-sky-300">runs</span>: <span class="text-green-400">200</span>,
+      <span class="text-sky-300">viaIR</span>: <span class="text-purple-400">true</span>,
+      <span class="text-sky-300">batchOperations</span>: <span class="text-purple-400">true</span>
+    },
+    <span class="text-sky-300">zkCompression</span>: {
+      <span class="text-sky-300">enabled</span>: <span class="text-purple-400">true</span>,
+      <span class="text-sky-300">prover</span>: <span class="text-orange-300">"groth16"</span>
+    }
+  }
+};</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="gradient-border p-12 rounded-3xl bg-gray-900/50 backdrop-blur">
+                <h2 class="text-3xl md:text-4xl font-bold mb-6">准备优化您的 Token 合约？</h2>
+                <p class="text-gray-400 mb-8 text-lg">加入 500+ 开发团队，使用 OpenClaw 构建下一代高效 DApp</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button class="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl font-semibold text-white hover:scale-105 transition-transform">
+                        开始免费试用
+                    </button>
+                    <button class="px-8 py-4 border border-white/20 rounded-xl font-semibold text-white hover:bg-white/5 transition-all">
+                        查看技术白皮书
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="border-t border-white/10 py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <span class="font-bold text-xl">OpenClaw</span>
+            </div>
+            <div class="flex gap-8 text-gray-400 text-sm">
+                <a href="#" class="hover:text-white transition-colors">文档</a>
+                <a href="#" class="hover:text-white transition-colors">GitHub</a>
+                <a href="#" class="hover:text-white transition-colors">Discord</a>
+                <a href="#" class="hover:text-white transition-colors">Twitter</a>
+            </div>
+            <div class="text-gray-600 text-sm">
+                © 2024 OpenClaw Protocol. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 神经网络背景动画
+        const canvas = document.getElementById('neuralCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let particles = [];
+        const particleCount = 50;
+        const connectionDistance = 150;
+        
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2 + 1;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+            }
+            
+            draw() {
+                ctx.fillStyle = 'rgba(99, 102, 241, 0.5)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            
+            particles.forEach((p, index) => {
+                p.update();
+                p.draw();
+                
+                // 绘制连接线
+                for (let j = index + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dx = p.x - p2.x;
+                    const dy = p.y - p2.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < connectionDistance) {
+                        ctx.strokeStyle = `rgba(99, 102, 241, ${0.2 * (1 - distance / connectionDistance)})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        window.addEventListener('resize', resize);
+        resize();
+        initParticles();
+        animate();
+
+        // 性能图表
+        const ctx2 = document.getElementById('performanceChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: ['标准转账', '批量转账', '合约部署', 'DEX 交易', 'NFT 铸造'],
+                datasets: [{
+                    label: '优化前 Gas (k)',
+                    data: [65, 450, 320, 180, 240],
+                    backgroundColor: 'rgba(148, 163, 184, 0.5)',
+                    borderColor: 'rgba(148, 163, 184, 1)',
+                    borderWidth: 1
+                }, {
+                    label: '优化后 Gas (k)',
+                    data: [23, 68, 95, 50, 72],
+                    backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                    borderColor: 'rgba(99, 102, 241, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: { color: '#94a3b8' }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8' }
+                    }
+                }
+            }
+        });
+
+        // 代码标签切换
+        const codeExamples = {
+            hardhat: `<span class="text-gray-500">// hardhat.config.js</span>
+<span class="text-purple-400">require</span>(<span class="text-orange-300">"@openclaw/hardhat-plugin"</span>);
+
+<span class="text-sky-300">module.exports</span> = {
+  <span class="text-sky-300">solidity</span>: <span class="text-orange-300">"0.8.19"</span>,
+  <span class="text-sky-300">openclaw</span>: {
+    <span class="text-sky-300">enabled</span>: <span class="text-purple-400">true</span>,
+    <span class="text-sky-300">optimizer</span>: {
+      <span class="text-sky-300">runs</span>: <span class="text-green-400">200</span>,
+      <span class="text-sky-300">viaIR</span>: <span class="text-purple-400">true</span>,
+      <span class="text-sky-300">batchOperations</span>: <span class="text-purple-400">true</span>
+    },
+    <span class="text-sky-300">zkCompression</span>: {
+      <span class="text-sky-300">enabled</span>: <span class="text-purple-400">true</span>,
+      <span class="text-sky-300">prover</span>: <span class="text-orange-300">"groth16"</span>
+    }
+  }
+};`,
+            foundry: `<span class="text-gray-500">// foundry.toml</span>
+[<span class="text-sky-300">profile.default</span>]
+src = <span class="text-orange-300">"src"</span>
+out = <span class="text-orange-300">"out"</span>
+libs = [<span class="text-orange-300">"lib"</span>]
+
+[<span class="text-sky-300">profile.openclaw</span>]
+optimizer = <span class="text-purple-400">true</span>
+optimizer_runs = <span class="text-green-400">200</span>
+via_ir = <span class="text-purple-400">true</span>
+extra_output = [<span class="text-orange-300">"abi"</span>, <span class="text-orange-300">"evm.bytecode"</span>]
+
+<span class="text-gray-500"># 启用 OpenClaw 优化器</span>
+[<span class="text-sky-300">openclaw</span>]
+enabled = <span class="text-purple-400">true</span>
+batch_size = <span class="text-green-400">100</span>
+zk_prover = <span class="text-orange-300">"plonk"</span>`,
+            truffle: `<span class="text-gray-500">// truffle-config.js</span>
+<span class="text-purple-400">const</span> <span class="text-blue-400">OpenClawPlugin</span> = <span class="text-purple-400">require</span>(<span class="text-orange-300">'@openclaw/truffle-plugin'</span>);
+
+<span class="text-sky-300">module.exports</span> = {
+  <span class="text-sky-300">compilers</span>: {
+    <span class="text-sky-300">solc</span>: {
+      <span class="text-sky-300">version</span>: <span class="text-orange-300">"0.8.19"</span>,
+      <span class="text-sky-300">settings</span>: {
+        <span class="text-sky-300">optimizer</span>: {
+          <span class="text-sky-300">enabled</span>: <span class="text-purple-400">true</span>,
+          <span class="text-sky-300">runs</span>: <span class="text-green-400">200</span>
+        },
+        <span class="text-sky-300">viaIR</span>: <span class="text-purple-400">true</span>
+      }
+    }
+  },
+  <span class="text-sky-300">plugins</span>: [<span class="text-orange-300">"@openclaw/truffle-plugin"</span>],
+  <span class="text-sky-300">openclaw</span>: {
+    <span class="text-sky-300">compression</span>: <span class="text-purple-400">true</span>,
+    <span class="text-sky-300">parallel</span>: <span class="text-purple-400">true</span>
+  }
+};`
+        };
+
+        function switchTab(tab) {
+            // 更新按钮样式
+            ['hardhat', 'foundry', 'truffle'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === tab) {
+                    btn.className = 'tab-active px-6 py-3 text-sm font-medium transition-all';
+                } else {
+                    btn.className = 'px-6 py-3 text-sm font-medium text-gray-400 hover:text-white transition-all';
+                }
+            });
+            
+            // 更新代码内容
+            document.getElementById('code-content').innerHTML = codeExamples[tab];
+        }
+
+        // 滚动动画观察器
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // 观察所有卡片元素
+        document.querySelectorAll('.gradient-border, .group').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'all 0.6s ease-out';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
