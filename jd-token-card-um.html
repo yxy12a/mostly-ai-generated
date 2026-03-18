@@ -601,7 +601,20 @@
                 <li style="padding: 15px 0; border-bottom: 1px solid #eee; display: flex; align-items: start; gap: 15px;">
                     <span style="color: #e1251b; font-weight: bold;">✓</span>
                     <div>
-                        <strong>上下文压缩与对话管理：</strong>OpenClaw的Agentic Loop会将所有历史聊天记录、技能配置、附件总结一并传给大模型，导致单次请求Token数轻松过万。核心优化手段：
+                        <strong>上下文压缩与对话管理：</strong>OpenClaw的Agentic Loop会将所有历史聊天记录、技能配置、附件总结一并传给大模型，导致单次请求Token数轻松过万。自动配置示例如下：
+                        <div class="code-block">
+                           <pre>
+                              {
+                                  "compaction": {
+                                      "memoryFlush": {
+                                          "enabled": true,
+                                          "softThresholdTokens": 4000,
+                                          "prompt": "Write lasting notes to memory/YYYY-MM-DD.md; reply NO_REPLY if nothing to store."
+                                        }
+                                  }
+                             }
+                           </pre>    
+                         </div>
                     </div>
                 </li>
                 <li style="padding: 15px 0; display: flex; align-items: start; gap: 15px;">
