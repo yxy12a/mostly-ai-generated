@@ -601,13 +601,13 @@
                 <li style="padding: 15px 0; border-bottom: 1px solid #eee; display: flex; align-items: start; gap: 15px;">
                     <span style="color: #e1251b; font-weight: bold;">✓</span>
                     <div>
-                        <strong>缓存策略：</strong>对重复性高的查询结果进行本地缓存，避免重复消耗 Token
+                        <strong>上下文压缩与对话管理：</strong>OpenClaw的Agentic Loop会将所有历史聊天记录、技能配置、附件总结一并传给大模型，导致单次请求Token数轻松过万。核心优化手段：
                     </div>
                 </li>
                 <li style="padding: 15px 0; display: flex; align-items: start; gap: 15px;">
                     <span style="color: #e1251b; font-weight: bold;">✓</span>
                     <div>
-                        <strong>错误重试：</strong>实现指数退避重试机制，确保服务稳定性
+                        <strong>定期重置对话：</strong>手动重置：使用/new或/reset命令立即清理历史上下文 自动重置：配置"heartbeat": {"every": "1d"}每天自动重置
                     </div>
                 </li>
             </ul>
