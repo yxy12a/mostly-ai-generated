@@ -519,35 +519,26 @@
                 
                 <li class="step-item">
                     <div class="step-number">2</div>
-                    <div class="step-title">激活额度卡</div>
+                    <div class="step-title">准备安装OpenClaw的主机资源</div>
                     <div class="step-content">
-                        登录京东云控制台，进入"大模型服务" → "额度管理" → "激活额度卡"。
+                        使用本地设备安装OpenClaw，可选用Vmware Fusion创建虚拟机来安装OpenClaw。
                         <div class="highlight-box">
-                            <strong>注意：</strong>激活前请确认您的账户已完成实名认证，否则无法正常使用 API 服务。
+                            <strong>注意：</strong>对于新手，不建议直接在工作笔记本或者保存有重要数据的机器上直接安装OpenClaw。
                         </div>
                     </div>
                 </li>
 
                 <li class="step-item">
                     <div class="step-number">3</div>
-                    <div class="step-title">配置 API 调用</div>
+                    <div class="step-title">开始安装OpenClaw</div>
                     <div class="step-content">
-                        使用以下代码示例开始调用大模型 API：
+                        使用以下命令安装：
                         <div class="code-block">
-POST https://api.jd.com/llm/v1/chat/completions
-Headers:
-  Authorization: Bearer YOUR_API_KEY
-  Content-Type: application/json
+# curl -fsSL https://openclaw.ai/install.sh | bash
+# openclaw onboard
 
-Body:
-{
-  "model": "jingxi-llm-13b",
-  "messages": [
-    {"role": "system", "content": "你是一个 helpful 助手"},
-    {"role": "user", "content": "你好，请介绍一下 Token 额度卡的使用方法"}
-  ],
-  "max_tokens": 2000
-}</div>
+
+</div>
                     </div>
                 </li>
 
